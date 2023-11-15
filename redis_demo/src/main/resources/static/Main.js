@@ -1,3 +1,37 @@
+function tr(text) {
+    return '<tr>' + text + '</tr>';
+}
+
+function td(text) {
+    return '<td>' + text + '</td>';
+}
+
+function editButton(key) {
+    var format = '<button '
+        + 'class="btn btn-default" '
+        + 'onclick="editKey(\'{key}\')" '
+        + '>Edit</button>';
+    return format.replace(/{key}/g, key);
+}
+
+function deleteButton(key) {
+    var format = '<button '
+        + 'class="btn btn-default" '
+        + 'data-key="{key}" '
+        + 'onclick="deleteKey(\'{key}\')" '
+        + '>Delete</button>'
+    return format.replace(/{key}/g, key);
+}
+
+function row(key, value) {
+    return $(
+        tr(
+            td(key) +
+            td(value) +
+            td(editButton(key)) +
+            td(deleteButton(key))));
+}
+
 function refreshTable() {
     $.get('/values', function(data) {
         var attr,
@@ -11,13 +45,28 @@ function refreshTable() {
     });
 }
 
+function editKey(key) {
+    /* Find the row with key in first column (key column). */
+    var format = '#mainTable tbody td:first-child:contains("{key}")',
+        selector = format.replace(/{key}/, key),
+        cells = $(selector).parent().children(),
+        key = cells[0].textContent,
+        value = cells[1].textContent,
+        keyInput = $('#keyInput'),
+        valueInput = $('#valueInput');
+
+    keyInput.val(key);
+    valueInput.val(value);
+    valueInput.select();
+}
+
 function deleteKey(key) {
+
     $.post('/delete', {key: key}, function() {
         refreshTable();
         $('#keyInput').focus();
     });
 }
-
 
 $(document).ready(function() {
     var keyInput = $('#keyInput'),
@@ -29,6 +78,7 @@ $(document).ready(function() {
             key: keyInput.val(),
             value: valueInput.val()
         };
+
         $.post('/add', data, function() {
             refreshTable();
             keyInput.val('');
@@ -37,5 +87,6 @@ $(document).ready(function() {
         });
         event.preventDefault();
     });
+
     keyInput.focus();
 });
